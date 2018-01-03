@@ -1,0 +1,32 @@
+lib-cov
+*.seed
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+*.rar
+
+pids
+logs
+results
+
+.idea
+npm-debug.log
+node_modules
+node_modules.*
+
+release
+
+upload
+
+dist/*.map
+data/logs/
+
+# 本地数据
+/data/
+/public/uploads/
+
+# 样式发布文件
+**/public/dist/

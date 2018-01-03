@@ -31,6 +31,7 @@ app.set('view engine', 'ejs');
 
 app.use(helmet());
 
+app.use(express.static(path.join(__dirname, './public')));
 app.use(express.static(path.join(__dirname, './public/dist')));
 app.use(express.static(path.join(__dirname, './public/asset')));
 app.use(express.static(path.join(config.uploadPath)));

@@ -5,14 +5,18 @@
 const log = require('./log');
 
 process.env.NODE_CONFIG_DIR = __dirname;
-module.exports              = {
+
+module.exports = {
     project: {
         webPort: 3003,
         name   : 'image-server',
         host   : 'http://192.168.1.127:3003'
     },
 
-    log: log,
+    log          : log,
+    uploadPath   : '/data/image-server/',
+    thumbnailPath: '/data/image-server/thumbnails/',
 
-    uploadPath: '/data/image-server/'
+    maxThumbnailWidth: 2000,
+    maxThumbnailHeight: 2000
 };

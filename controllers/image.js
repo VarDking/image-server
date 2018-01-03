@@ -55,12 +55,12 @@ function getImage(req, res, next) {
 
     //thumbnails
     let originAbsolutePath = `${config.uploadPath}${path}`.replace(/_\d+x?(\d+)?$/, '');
-    let resizeStream       = sharp(originAbsolutePath).resize(width, height || null).png();
+    let resizeStream       = sharp(originAbsolutePath).resize(width, height || null).jpeg();
     resizeStream.on('error', function error(err) {
         logger.error(err);
         res.status(500).end();
     });
-    res.writeHead(200, {'Content-Type': 'image/png'});
+    res.writeHead(200, {'Content-Type': 'image/jpeg'});
     resizeStream.pipe(res);
 }
 

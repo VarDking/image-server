@@ -22,7 +22,7 @@ const connectLogger = require('./lib/logger').getLogger('main', {
 
 const app = module.exports = express();
 
-//附件项目信息
+//attach project info
 app.locals.projectInfo = config.project;
 
 app.engine('ejs', engine);
@@ -51,11 +51,11 @@ app.use(bodyParser.json({limit: '10mb'}));// parse application/json
 app.use(router);
 app.use(notFound);
 
-//启动服务
+//start server
 app.start = function () {
     return app.listen(config.project.webPort, () => {
-        logger.info(`监听端口${config.project.webPort}`);
-        logger.info(`服务已启动... `);
+        logger.info(`server is listening on ${config.project.webPort}`);
+        logger.info(`server stated ... `);
     });
 };
 

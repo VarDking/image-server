@@ -10,7 +10,7 @@ module.exports = {
     project: {
         webPort: 3003,
         name   : 'image-server',
-        host   : 'http://192.168.1.127:3003'
+        host   : ''
     },
 
     log          : log,

@@ -3,12 +3,16 @@
  */
 'use strict';
 const send     = require('send');
+const path     = require('path');
 const sharp    = require('sharp');
 const parseUrl = require('parseurl');
+const fs       = require('fs-extra');
 const config   = require('../config');
 
-const logger   = require('../lib/logger').getLogger('main');
-const imageReg = /\.(?:jpg|jpeg|png|webp|gif)(?:[_.](\d{2,4})x?(\d{2,4})?)?$/;
+const logger          = require('../lib/logger').getLogger('main');
+const imageReg        = /\.(?:jpg|jpeg|png|webp|gif)(?:[_.](\d{2,4})x?(\d{2,4})?)?(\.(?:jpg|jpeg|png|webp|gif))?$/;
+const imageExtNameReg = /\.(?:jpg|jpeg|png|webp|gif)$/;
+const thumbnailExtReg = /_\d+x?(\d+)?(\.(?:jpg|jpeg|png|webp|gif))?$/;
 
 module.exports = {getImage};
 
@@ -18,6 +22,11 @@ const sendOpts = {
     root        : config.uploadPath
 };
 
+const thumbnailSendOpts = {
+    cacheControl: true,
+    dotfiles    : "deny",
+    root        : config.thumbnailPath
+};
 
 /**
  * getImage, if thumbnails width over max value,return 404
@@ -27,15 +36,15 @@ const sendOpts = {
  */
 function getImage(req, res, next) {
     let originalUrl = parseUrl.original(req);
-    let path        = parseUrl(req).pathname;
+    let pathName    = parseUrl(req).pathname;
 
-    if (path === '/' && originalUrl.pathname.substr(-1) !== '/') {
+    if (pathName === '/' && originalUrl.pathname.substr(-1) !== '/') {
         return next(); //404
     } else {
-        path = path.slice(1);
+        pathName = pathName.slice(1);
     }
 
-    let imageSizeMath = path.match(imageReg);
+    let imageSizeMath = pathName.match(imageReg);
     if (!imageSizeMath) {
         return next(); //404
     }
@@ -45,7 +54,7 @@ function getImage(req, res, next) {
 
     // origin image
     if (!width) {
-        return sendFile(req, res, path, sendOpts);
+        return sendFile(req, res, pathName, sendOpts);
     }
 
     // over max width or height return 404
@@ -53,24 +62,37 @@ function getImage(req, res, next) {
         return next();
     }
 
-    //thumbnails
-    let originAbsolutePath = `${config.uploadPath}${path}`.replace(/_\d+x?(\d+)?$/, '');
-    let resizeStream       = sharp(originAbsolutePath).resize(width, height || null).jpeg();
-    resizeStream.on('error', err => {
+    // thumbnails
+    let originAbsolutePath    = `${config.uploadPath}${pathName}`.replace(thumbnailExtReg, '');
+    let thumbnailAbsolutePath = `${config.thumbnailPath}${pathName}`;
+    if (!imageExtNameReg.test(thumbnailAbsolutePath)) {
+        let extName           = '.jpg'; //default jpeg
+        pathName              = pathName + extName;
+        thumbnailAbsolutePath = thumbnailAbsolutePath + extName;
+    }
+
+    return fs.pathExists(thumbnailAbsolutePath).then(exists => {
+        if (!exists) {
+            let dir = path.dirname(thumbnailAbsolutePath);
+            return fs.ensureDir(dir).then(() => {
+                return sharp(originAbsolutePath).resize(width, height || null).toFile(thumbnailAbsolutePath)
+            });
+        }
+    }).then(() => {
+        return sendFile(req, res, pathName, thumbnailSendOpts);
+    }).catch(err => {
         logger.error(err);
-        if(err.message.includes('Input file is missing or of an unsupported image format')){
+        if (err.message.includes('Input file is missing or of an unsupported image format')) {
             res.status(404).end();
-        }else{
+        } else {
             res.status(500).end();
         }
     });
-    res.set('Content-Type', 'image/jpeg');
-    resizeStream.pipe(res);
 }
 
-function sendFile(req, res, path, sendOpts) {
+function sendFile(req, res, pathName, sendOpts) {
     let isEnded = false;
-    let stream  = send(req, path, sendOpts);
+    let stream  = send(req, pathName, sendOpts);
 
     // on directory
     stream.on('directory', function () {

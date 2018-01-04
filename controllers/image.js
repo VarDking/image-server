@@ -56,11 +56,15 @@ function getImage(req, res, next) {
     //thumbnails
     let originAbsolutePath = `${config.uploadPath}${path}`.replace(/_\d+x?(\d+)?$/, '');
     let resizeStream       = sharp(originAbsolutePath).resize(width, height || null).jpeg();
-    resizeStream.on('error', function error(err) {
+    resizeStream.on('error', err => {
         logger.error(err);
-        res.status(500).end();
+        if(err.message.includes('Input file is missing or of an unsupported image format')){
+            res.status(404).end();
+        }else{
+            res.status(500).end();
+        }
     });
-    res.writeHead(200, {'Content-Type': 'image/jpeg'});
+    res.set('Content-Type', 'image/jpeg');
     resizeStream.pipe(res);
 }
 
@@ -76,7 +80,7 @@ function sendFile(req, res, path, sendOpts) {
         }
     });
 
-    // forward errors
+    // on errors
     stream.on('error', function error(err) {
         logger.error(err);
         if (isEnded) {

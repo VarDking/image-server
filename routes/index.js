@@ -10,4 +10,5 @@ const oMultiFile = new MultiFile(config.uploadPath, logger);
 const image  = require('../controllers/image');
 const router = module.exports = require('express').Router();
 
+router.get('/:image', image.getImage);
 router.get('/*', image.getImage);

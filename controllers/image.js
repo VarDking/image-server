@@ -35,6 +35,7 @@ const thumbnailSendOpts = {
  * @returns {*}
  */
 function getImage(req, res, next) {
+    let imageParam  = req.params['image'];
     let originalUrl = parseUrl.original(req);
     let pathName    = parseUrl(req).pathname;
 
@@ -51,6 +52,10 @@ function getImage(req, res, next) {
 
     let width  = +imageSizeMath[1];
     let height = +imageSizeMath[2];
+
+    if(imageParam){
+        pathName = path.join(imageParam.slice(2, 4), imageParam.slice(4,6) , imageParam);
+    }
 
     // origin image
     if (!width) {
@@ -75,7 +80,7 @@ function getImage(req, res, next) {
         if (!exists) {
             let dir = path.dirname(thumbnailAbsolutePath);
             return fs.ensureDir(dir).then(() => {
-                return sharp(originAbsolutePath).resize(width, height || null).toFile(thumbnailAbsolutePath)
+                return sharp(originAbsolutePath).resize(width, height || null).toFile(thumbnailAbsolutePath);
             });
         }
     }).then(() => {
